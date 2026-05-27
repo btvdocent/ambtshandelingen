@@ -1,1 +1,529 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactieve BTV Training - Politieacademie</title>
+    <style>
+        :root {
+            --police-blue: #003366;
+            --police-gold: #c5a059;
+            --light-gray: #f4f4f9;
+            --white: #ffffff;
+            --danger: #dc3545;
+            --success: #198754;
+            --dark: #212529;
+        }
 
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--light-gray); 
+            margin: 0; 
+            padding: 0; 
+            color: var(--dark); 
+        }
+
+        .container { 
+            max-width: 1000px; 
+            margin: 30px auto; 
+            background: var(--white); 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15); 
+            position: relative; 
+            min-height: 500px;
+        }
+
+        h1, h2, h3, h4 { 
+            color: var(--police-blue); 
+            border-bottom: 2px solid var(--police-gold); 
+            padding-bottom: 10px; 
+            margin-top: 0;
+        }
+
+        .assignment-box { 
+            background: #eef4fb; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 25px; 
+            border-left: 6px solid var(--police-blue); 
+        }
+
+        .case-box {
+            background: #fff9e6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--police-gold);
+            font-size: 0.95em;
+        }
+
+        .text-to-correct {
+            background: #f8f9fa;
+            padding: 15px;
+            border: 1px dashed #ccc;
+            border-radius: 6px;
+            font-style: italic;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .hidden { display: none !important; }
+        
+        .btn { 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: background 0.3s ease; 
+            display: inline-block;
+        }
+        
+        .btn-blue { background: var(--police-blue); color: white; }
+        .btn-blue:hover { background: #002244; }
+        .btn-gold { background: var(--police-gold); color: white; }
+        .btn-gold:hover { background: #aa8441; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #bd2130; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #146c43; }
+        
+        .btn-next { 
+            position: fixed; 
+            bottom: 30px; 
+            right: 30px; 
+            z-index: 100; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+        }
+
+        input, select, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0 20px 0; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+            font-family: inherit;
+            font-size: 1em;
+        }
+
+        textarea { resize: vertical; min-height: 120px; }
+
+        /* Realtime Collaboration Feed */
+        .feed-container {
+            margin-top: 35px;
+            padding-top: 20px;
+            border-top: 3px double #ddd;
+        }
+
+        .pv-post { 
+            border: 1px solid #e0e0e0; 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 8px; 
+            background: #fafafa;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .pv-post strong {
+            color: var(--police-blue);
+            font-size: 1.05em;
+        }
+
+        .pv-post p {
+            white-space: pre-wrap;
+            background: white;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+            margin: 10px 0;
+        }
+
+        .feedback-section {
+            margin-top: 15px;
+            padding-left: 15px;
+            border-left: 3px solid var(--police-gold);
+        }
+
+        .feedback-item { 
+            background: #fffdf5; 
+            padding: 10px; 
+            border-radius: 4px; 
+            font-size: 0.9em; 
+            margin-top: 8px; 
+            border: 1px solid #f1e5c7;
+        }
+
+        #login-screen { 
+            text-align: center; 
+            padding: 40px 0; 
+            max-width: 500px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button class="btn btn-danger hidden" style="position:absolute; top:15px; right:15px;" id="resetBtn">Docent: Reset Database</button>
+
+    <div id="screen-login">
+        <h1>BTV Interactieve Digitale PV-Training</h1>
+        <div id="login-screen">
+            <label for="user-name" style="text-align: left; display: block; font-weight: bold;">Achternaam Verbalisant:</label>
+            <input type="text" id="user-name" placeholder="Bijv. Jansen">
+            
+            <label for="class-select" style="text-align: left; display: block; font-weight: bold;">Selecteer NATO-klas:</label>
+            <select id="class-select">
+                <option value="">-- Maak een keuze --</option>
+                <option>ALPHA</option><option>BRAVO</option><option>CHARLIE</option>
+                <option>DELTA</option><option>ECHO</option><option>FOXTROT</option>
+                <option>GOLF</option><option>HOTEL</option><option>JULIET</option>
+                <option>KILO</option><option>LIMA</option><option>MIKE</option>
+            </select>
+
+            <label for="role-select" style="text-align: left; display: block; font-weight: bold;">Rol binnen deze sessie:</label>
+            <select id="role-select">
+                <option value="student">Student (Aspirant)</option>
+                <option value="docent">Docent / Instructeur</option>
+            </select>
+
+            <button class="btn btn-blue" id="loginBtn" style="width: 100%; margin-top: 10px;">Start Training</button>
+        </div>
+    </div>
+
+    <div id="screen-step1" class="hidden">
+        <div class="assignment-box">
+            <h3>Stap 1: Taalkundige correctie &amp; Redactie</h3>
+            <p><b>Leerdoel:</b> Het herkennen van taalfouten, stijlfouten en foutieve samenstellingen/vervoegingen binnen een operationele context, en deze tekst zelfstandig taalkundig corrigeren naar de professionele norm.</p>
+        </div>
+        
+        <p><b>Originele tekst van de verbalisant:</b></p>
+        <div class="text-to-correct">
+            "Ik zag Kooyman terug lopen richting de voordeur. Ik hoorde Kooyman roepen ''maar de buren zijn nu echt weg, ik zag ze vertrekken''. Ik hoorde mijn collega hierop antwoorden en uitleggen dat er meer omwonende zijn die meldingen maken van geluidsoverlast van zijn muziek. Ik hoorde mijn collega hierna zeggen dat Kooyman hier een boete voor kreeg. Ik hoorde Kooyman hierop antwoorden ''maar de muziek is nu toch uit, dan heeft er niemand last van''. Ik hoorde mijn collega hierop antwoorden dat wij hem de eerste keer een waarschuwing hebben gegeven en hij een boete zou krijgen als wij terug moesten komen. Ik hoorde Kooyman hierop reageren ''ja oké dan, hoeveel is die boete?''."
+        </div>
+
+        <label for="input1" style="font-weight: bold;">Typ hieronder de volledig gecorrigeerde tekst:</label>
+        <textarea id="input1" placeholder="Verbeter de tekst grondig (let op: samenstellingen, leestekens, spelling van omwonenden, etc.)..."></textarea>
+        <button class="btn btn-blue" id="send1">Verzend Uitwerking</button>
+
+        <div class="feed-container">
+            <h3>Live Uitwerkingen &amp; Peer-Feedback (Stap 1)</h3>
+            <div id="feed-step1"></div>
+        </div>
+    </div>
+
+    <div id="screen-step2A" class="hidden">
+        <div class="assignment-box">
+            <h3>Stap 2A: Waarschuwing of sanctie geven</h3>
+            <p><b>Leerdoel:</b> Het objectief, helder en rechtmatig verbaliseren van een gegeven waarschuwing of opgelegde sanctie.</p>
+            <p><small><i>Tip: Kijk in het Zakboek Proces-verbaal en Bewijsrecht.</i></small></p>
+        </div>
+        <div class="case-box">
+            <b>Casusomschrijving:</b> Aanhouding van een jongen voor fietsendiefstal op heterdaad in het fietsenhok bij het ROC in Amersfoort. Je neemt zijn betonschaar in beslag. Hij werkt niet mee, je gebruikt pepperspray, je fouilleert hem en gebruikt handboeien.
+        </div>
+        <label for="input2A" style="font-weight: bold;">Opdracht: Beschrijf specifiek de ambtshandeling rondom de waarschuwing of de sanctie:</label>
+        <textarea id="input2A" placeholder="Beschrijf de waarschuwing/sanctie objectief..."></textarea>
+        <button class="btn btn-blue" id="send2A">Verzend Uitwerking</button>
+
+        <div class="feed-container">
+            <h3>Live Uitwerkingen &amp; Peer-Feedback (Stap 2A)</h3>
+            <div id="feed-step2A"></div>
+        </div>
+    </div>
+
+    <div id="screen-step2B" class="hidden">
+        <div class="assignment-box">
+            <h3>Stap 2B: De Aanhouding</h3>
+            <p><b>Leerdoel:</b> Het feitelijk en juridisch correct omschrijven van de daadwerkelijke aanhouding (op heterdaad) conform de wettelijke vereisten.</p>
+            <p><small><i>Tip: Kijk in het Zakboek Proces-verbaal en Bewijsrecht.</i></small></p>
+        </div>
+        <div class="case-box">
+            <b>Casusomschrijving:</b> Aanhouding van een jongen voor fietsendiefstal op heterdaad in het fietsenhok bij het ROC in Amersfoort. Je neemt zijn betonschaar in beslag. Hij werkt niet mee, je gebruikt pepperspray, je fouilleert hem en gebruikt handboeien.
+        </div>
+        <label for="input2B" style="font-weight: bold;">Opdracht: Beschrijf stapsgewijs hoe de aanhouding feitelijk en juridisch is voltrokken:</label>
+        <textarea id="input2B" placeholder="Ter plaatse hield ik de verdachte aan..."></textarea>
+        <button class="btn btn-blue" id="send2B">Verzend Uitwerking</button>
+
+        <div class="feed-container">
+            <h3>Live Uitwerkingen &amp; Peer-Feedback (Stap 2B)</h3>
+            <div id="feed-step2B"></div>
+        </div>
+    </div>
+
+    <div id="screen-step2C" class="hidden">
+        <div class="assignment-box">
+            <h3>Stap 2C: Inbeslagname</h3>
+            <p><b>Leerdoel:</b> Het nauwkeurig en sluitend vastleggen van de inbeslagname van goederen (de betonschaar) ten behoeve van de bewijsvoering.</p>
+            <p><small><i>Tip: Kijk in het Zakboek Proces-verbaal en Bewijsrecht.</i></small></p>
+        </div>
+        <div class="case-box">
+            <b>Casusomschrijving:</b> Aanhouding van een jongen voor fietsendiefstal op heterdaad in het fietsenhok bij het ROC in Amersfoort. Je neemt zijn betonschaar in beslag. Hij werkt niet mee, je gebruikt pepperspray, je fouilleert hem en gebruikt handboeien.
+        </div>
+        <label for="input2C" style="font-weight: bold;">Opdracht: Verbaliseer de inbeslagname van de betonschaar (denk aan de omschrijving van het goed):</label>
+        <textarea id="input2C" placeholder="Hiertoe nam ik de aangetroffen betonschaar in beslag..."></textarea>
+        <button class="btn btn-blue" id="send2C">Verzend Uitwerking</button>
+
+        <div class="feed-container">
+            <h3>Live Uitwerkingen &amp; Peer-Feedback (Stap 2C)</h3>
+            <div id="feed-step2C"></div>
+        </div>
+    </div>
+
+    <div id="screen-step2D" class="hidden">
+        <div class="assignment-box">
+            <h3>Stap 2D: Verkrijgen van een machtiging</h3>
+            <p><b>Leerdoel:</b> Het adequaat onderbouwen en omschrijven van de noodzaak en het verkrijgen van een wettelijke machtiging binnen het proces-verbaal.</p>
+            <p><small><i>Tip: Kijk in het Zakboek Proces-verbaal en Bewijsrecht.</i></small></p>
+        </div>
+        <div class="case-box">
+            <b>Casusomschrijving:</b> Aanhouding van een jongen voor fietsendiefstal op heterdaad in het fietsenhok bij het ROC in Amersfoort. Je neemt zijn betonschaar in beslag. Hij werkt niet mee, je gebruikt pepperspray, je fouilleert hem en gebruikt handboeien.
+        </div>
+        <label for="input2D" style="font-weight: bold;">Opdracht: Beschrijf hoe en waarom de machtiging in deze (of hypothetisch verlengde) situatie werd verkregen:</label>
+        <textarea id="input2D" placeholder="Hiertoe vorderde ik/vroeg ik een machtiging tot..."></textarea>
+        <button class="btn btn-blue" id="send2D">Verzend Uitwerking</button>
+
+        <div class="feed-container">
+            <h3>Live Uitwerkingen &amp; Peer-Feedback (Stap 2D)</h3>
+            <div id="feed-step2D"></div>
+        </div>
+    </div>
+
+    <div id="screen-step2E" class="hidden">
+        <div class="assignment-box">
+            <h3>Stap 2E: Fouillering incl. gebruik handboeien</h3>
+            <p><b>Leerdoel:</b> Het objectief en chronologisch omschrijven van de veiligheidsfouillering en de specifieke juridische/feitelijke noodzaak voor het aanleggen van transportboeien.</p>
+            <p><small><i>Tip: Kijk in het Zakboek Proces-verbaal en Bewijsrecht.</i></small></p>
+        </div>
+        <div class="case-box">
+            <b>Casusomschrijving:</b> Aanhouding van een jongen voor fietsendiefstal op heterdaad in het fietsenhok bij het ROC in Amersfoort. Je neemt zijn betonschaar in beslag. Hij werkt niet mee, je gebruikt pepperspray, je fouilleert hem en gebruikt handboeien.
+        </div>
+        <label for="input2E" style="font-weight: bold;">Opdracht: Werk de fouillering en het boeien van de verdachte gedetailleerd en feitelijk uit:</label>
+        <textarea id="input2E" placeholder="Ik onderwierp de verdachte aan een veiligheidsfouillering en legde hem de transportboeien aan omdat..."></textarea>
+        <button class="btn btn-blue" id="send2E">Verzend Uitwerking</button>
+
+        <div class="feed-container">
+            <h3>Live Uitwerkingen &amp; Peer-Feedback (Stap 2E)</h3>
+            <div id="feed-step2E"></div>
+        </div>
+    </div>
+
+    <div id="screen-step2F" class="hidden">
+        <div class="assignment-box">
+            <h3>Stap 2F: Gebruik van geweld</h3>
+            <p><b>Leerdoel:</b> Voldoen aan de zware motiveringsplicht bij de aanwending van geweld (pepperspray) conform de Ambtsinstructie en proportionaliteit/subsidiariteit.</p>
+            <p><small><i>Tip: Kijk in het Zakboek Proces-verbaal en Bewijsrecht.</i></small></p>
+        </div>
+        <div class="case-box">
+            <b>Casusomschrijving:</b> Aanhouding van een jongen voor fietsendiefstal op heterdaad in het fietsenhok bij het ROC in Amersfoort. Je neemt zijn betonschaar in beslag. Hij werkt niet mee, je gebruikt pepperspray, je fouilleert hem en gebruikt handboeien.
+        </div>
+        <label for="input2F" style="font-weight: bold;">Opdracht: Beschrijf nauwkeurig de geweldsaanwending (het verzet, de waarschuwing vooraf en de inzet van pepperspray):</label>
+        <textarea id="input2F" placeholder="Aangezien de verdachte zich bleef verzetten, heb ik, na de vordering te hebben geuit, pepperspray toegepast..."></textarea>
+        <button class="btn btn-success" id="send2F">Verzend &amp; Voltooi Ambtshandelingen</button>
+
+        <div class="feed-container">
+            <h3>Live Uitwerkingen &amp; Peer-Feedback (Stap 2F)</h3>
+            <div id="feed-step2F"></div>
+        </div>
+    </div>
+
+    <button class="btn btn-gold btn-next hidden" id="nextBtn">Volgende Stap &rarr;</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // Firebase Configuratie exact overgenomen uit vergelijkingsmateriaal
+    const firebaseConfig = {
+        apiKey: "AIzaSyCCTemDDut8gP3y_S8K4Ss6iVy9ND73aEo",
+        authDomain: "lessenbtvdocent.firebaseapp.com",
+        databaseURL: "https://lessenbtvdocent-default-rtdb.europe-west1.firebasedatabase.app/",
+        projectId: "lessenbtvdocent",
+        storageBucket: "lessenbtvdocent.firebasestorage.app",
+        messagingSenderId: "254845148285",
+        appId: "1:254845148285:web:2f922dfcb7f59d2c2aa514"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Flow & State variabelen
+    let currentUser = "";
+    let currentClass = "";
+    let currentRole = "";
+    let currentScreenIndex = 0;
+
+    const screens = [
+        "screen-login",
+        "screen-step1",
+        "screen-step2A",
+        "screen-step2B",
+        "screen-step2C",
+        "screen-step2D",
+        "screen-step2E",
+        "screen-step2F"
+    ];
+
+    // Navigatie logica
+    function updateScreenView() {
+        screens.forEach((screenId, idx) => {
+            const el = document.getElementById(screenId);
+            if (idx === currentScreenIndex) {
+                el.classList.remove("hidden");
+            } else {
+                el.classList.add("hidden");
+            }
+        });
+
+        // Toon/verberg de 'Volgende' knop op basis van positie
+        const nextBtn = document.getElementById("nextBtn");
+        if (currentScreenIndex > 0 && currentScreenIndex < screens.length - 1) {
+            nextBtn.classList.remove("hidden");
+        } else {
+            nextBtn.classList.add("hidden");
+        }
+
+        // Toon docentknop enkel als de gebruiker de rol 'docent' heeft gekozen
+        const resetBtn = document.getElementById("resetBtn");
+        if (currentRole === "docent") {
+            resetBtn.classList.remove("hidden");
+        } else {
+            resetBtn.classList.add("hidden");
+        }
+    }
+
+    // Centraal data-verzendsysteem per stap naar Firebase
+    window.submitStepAnswer = (stepKey, inputId) => {
+        const textVal = document.getElementById(inputId).value.trim();
+        if (!textVal) return alert("Zorg dat je eerst een uitwerking invult.");
+        
+        // Gebruik de unieke achternaam als identifier binnen het datapad
+        set(ref(db, `btv_training/${stepKey}/answers/${currentUser}`), {
+            klas: currentClass,
+            tekst: textVal,
+            timestamp: Date.now()
+        }).then(() => {
+            alert("Je uitwerking is succesvol live gezet!");
+        }).catch((err) => {
+            console.error("Fout bij opslaan: ", err);
+        });
+    };
+
+    // Centraal feedback-systeem openbaar gemaakt via window object
+    window.givePeerFeedback = (stepKey, targetStudent) => {
+        const feedbackText = prompt(`Typ hier je opbouwende feedback voor collega ${targetStudent}:`);
+        if (!feedbackText || feedbackText.trim() === "") return;
+
+        push(ref(db, `btv_training/${stepKey}/answers/${targetStudent}/feedback`), {
+            van: currentUser,
+            klas: currentClass,
+            tekst: feedbackText.trim(),
+            timestamp: Date.now()
+        });
+    };
+
+    // Generieke Realtime Database Listener die feeds dynamisch opbouwt
+    function setupLiveFeedListener(stepKey, containerId) {
+        onValue(ref(db, `btv_training/${stepKey}/answers`), (snapshot) => {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = "";
+
+            if (!snapshot.exists()) {
+                container.innerHTML = "<p style='color:#777; font-style:italic;'>Nog geen uitwerkingen ingezonden voor deze stap.</p>";
+                return;
+            }
+
+            snapshot.forEach((childSnapshot) => {
+                const studentName = childSnapshot.key;
+                const data = childSnapshot.val();
+                
+                // Feedback compileren
+                let feedbackHtml = "";
+                if (data.feedback) {
+                    Object.values(data.feedback).forEach((fb) => {
+                        feedbackHtml += `
+                            <div class="feedback-item">
+                                <strong>Collega ${fb.van} [${fb.klas}]:</strong> ${fb.tekst}
+                            </div>
+                        `;
+                    });
+                }
+
+                // Post kaart opbouwen
+                container.innerHTML += `
+                    <div class="pv-post">
+                        <strong>Verbalisant ${studentName} [Class: ${data.klas}]</strong>
+                        <p>${data.tekst}</p>
+                        <button class="btn btn-gold" onclick="givePeerFeedback('${stepKey}', '${studentName}')" style="padding: 6px 12px; font-size: 0.8em; margin-bottom: 10px;">
+                            Geef Feedback / Correctie
+                        </button>
+                        <div class="feedback-section">
+                            ${feedbackHtml !== "" ? feedbackHtml : "<span style='font-size:0.85em; color:#999;'>Nog geen peer-feedback ontvangen.</span>"}
+                        </div>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    // --- Event Listeners Koppelen ---
+
+    // Login activeren
+    document.getElementById("loginBtn").onclick = () => {
+        currentUser = document.getElementById("user-name").value.trim().replace(/[.#$\[\]]/g, ""); // Opschonen voor Firebase keys
+        currentClass = document.getElementById("class-select").value;
+        currentRole = document.getElementById("role-select").value;
+
+        if (!currentUser || !currentClass) {
+            return alert("Zorg ervoor dat je je achternaam invult en je NATO-klas kiest!");
+        }
+
+        currentScreenIndex = 1; // Direct door naar stap 1
+        updateScreenView();
+    };
+
+    // Navigatie-knop onderin
+    document.getElementById("nextBtn").onclick = () => {
+        if (currentScreenIndex < screens.length - 1) {
+            currentScreenIndex++;
+            updateScreenView();
+        }
+    };
+
+    // Docent database reset functionaliteit
+    document.getElementById("resetBtn").onclick = () => {
+        if (confirm("Weet je absoluut zeker dat je de volledige realtime database wilt legen? Alle student-uitwerkingen en feedback worden direct gewist.")) {
+            remove(ref(db)).then(() => {
+                alert("Database succesvol leeggemaakt!");
+                location.reload();
+            });
+        }
+    };
+
+    // Handmatige triggers voor de verzendknoppen gekoppeld aan de database keys
+    document.getElementById("send1").onclick = () => submitStepAnswer("stap1", "input1");
+    document.getElementById("send2A").onclick = () => submitStepAnswer("stap2A", "input2A");
+    document.getElementById("send2B").onclick = () => submitStepAnswer("stap2B", "input2B");
+    document.getElementById("send2C").onclick = () => submitStepAnswer("stap2C", "input2C");
+    document.getElementById("send2D").onclick = () => submitStepAnswer("stap2D", "input2D");
+    document.getElementById("send2E").onclick = () => submitStepAnswer("stap2E", "input2E");
+    document.getElementById("send2F").onclick = () => submitStepAnswer("stap2F", "input2F");
+
+    // Initialiseren van alle live realtime database-verbindingen per stap
+    setupLiveFeedListener("stap1", "feed-step1");
+    setupLiveFeedListener("stap2A", "feed-step2A");
+    setupLiveFeedListener("stap2B", "feed-step2B");
+    setupLiveFeedListener("stap2C", "feed-step2C");
+    setupLiveFeedListener("stap2D", "feed-step2D");
+    setupLiveFeedListener("stap2E", "feed-step2E");
+    setupLiveFeedListener("stap2F", "feed-step2F");
+
+    // Eerste weergave instellen
+    updateScreenView();
+</script>
+
+</body>
+</html>
